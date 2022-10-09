@@ -51,7 +51,15 @@ exports.getCart = (req, res, next) => {
         .populate('cart.items.productId')
         .execPopulate()
         .then(user => {
-            const products = user.cart.items
+            let products = []
+            user.cart.items.forEach(i => {
+                if (i.productId) {
+                    products.push({
+                        quantity: i.quantity,
+                        product: { ...i.productId._doc },
+                    })
+                }
+            })
             res.render('shop/cart', {
                 path: '/cart',
                 pageTitle: 'Your Cart',
