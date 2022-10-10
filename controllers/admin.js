@@ -62,27 +62,31 @@ exports.postEditProduct = (req, res, next) => {
     const updatedImageUrl = req.body.imageUrl
     const updatedDesc = req.body.description
 
-    Product.findById(prodId)
+    Product.findOne({ _id: prodId, userId: req.user._id })
         .then(product => {
-            product.title = updatedTitle
-            product.price = updatedPrice
-            product.description = updatedDesc
-            product.imageUrl = updatedImageUrl
-            return product.save()
+            if (product) {
+                product.title = updatedTitle
+                product.price = updatedPrice
+                product.description = updatedDesc
+                product.imageUrl = updatedImageUrl
+                return product.save()
+            } else {
+                throw new Error('Not Authorized')
+            }
         })
         .then(result => {
             console.log('UPDATED PRODUCT!')
             res.redirect('/admin/products')
         })
-        .catch(err => console.log(err))
+        .catch(err => {
+            console.log(err)
+            res.redirect('/')
+        })
 }
 
 exports.getProducts = (req, res, next) => {
-    Product.find()
-        // .select('title price -_id')
-        // .populate('userId', 'name')
+    Product.find({ userId: req.user._id })
         .then(products => {
-            console.log(products)
             res.render('admin/products', {
                 prods: products,
                 pageTitle: 'Admin Products',
@@ -95,7 +99,7 @@ exports.getProducts = (req, res, next) => {
 
 exports.postDeleteProduct = (req, res, next) => {
     const prodId = req.body.productId
-    Product.findByIdAndRemove(prodId)
+    Product.deleteOne({ _id: prodId, userId: req.user._id })
         .then(() => {
             console.log('DESTROYED PRODUCT')
             return true
